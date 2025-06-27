@@ -1,2 +1,12 @@
-<h1 class="text-5xl underline text-amber-400 text-center">Test tailwind</h1>
-<router-outlet />
+<div class="min-h-screen bg-gray-100 p-6">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Jeu du Labyrinthe Pertimm</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <app-game-controls />
+      <app-labyrinth-board />
+    </div>
+
+    <router-outlet />
+  </div>
+</div>
