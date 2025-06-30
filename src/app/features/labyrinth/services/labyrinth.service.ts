@@ -46,11 +46,20 @@ export class LabyrinthService {
 
   async solveAutomatically() {
     try {
+      //liste des positions déjà visitées sans doublon
       const visited = new Set<string>();
-      const tabOfPathFromStartToActualPosition: { pos: Position; path: Position[] }[] = [];
+      const tabOfPathFromStartToActualPosition: {
+        pos: Position;
+        path: Position[];
+      }[] = [];
       const start = this.position();
 
+      // file contenant des objets à explorer avec leur position et le chemin suivi pour y arriver
       tabOfPathFromStartToActualPosition.push({ pos: start, path: [start] });
+
+      // On ajoute la position de départ comme premier élément à explorer
+      tabOfPathFromStartToActualPosition.push({ pos: start, path: [start] });
+      visited.add(`${start.x},${start.y}`);
 
       if (this.win()) {
         console.log('Le jeu est déjà gagné !');
@@ -58,38 +67,45 @@ export class LabyrinthService {
       }
 
       while (tabOfPathFromStartToActualPosition.length > 0) {
+        // prend le premier élément de la file
         const { pos, path } = tabOfPathFromStartToActualPosition.shift()!;
 
-        const moveResponse = await firstValueFrom(
-          this.api.move(this.moveUrl(), pos)
-        );
+        // explorer le chemin depuis le début jusqu'à la position actuelle
+        for (let i = 1; i < path.length; i++) {
+          const step = path[i];
 
-        this.position.set({
-          x: moveResponse.position_x,
-          y: moveResponse.position_y,
-        });
-        this.moveUrl.set(moveResponse.url_move);
-        this.discoverUrl.set(moveResponse.url_discover);
-        this.dead.set(moveResponse.dead);
-        this.win.set(moveResponse.win);
+          const response = await firstValueFrom(
+            this.api.move(this.moveUrl(), step)
+          );
 
-        visited.add(`${start.x},${start.y}`);
+          // Mise à jour de l’état local avec les infos reçues
+          this.position.set({ x: response.position_x, y: response.position_y });
+          this.moveUrl.set(response.url_move);
+          this.discoverUrl.set(response.url_discover);
+          this.dead.set(response.dead);
+          this.win.set(response.win);
 
-        if (moveResponse.dead) {
-          console.log('Partie terminée, on a atteri sur une piège');
-          break;
+          // Si on est mort, on arrête tout
+          if (response.dead) {
+            console.log('Partie terminée, on a atterri sur un piège');
+            return;
+          }
+
+          // Si on a gagné, on arrête et on affiche le chemin
+          if (response.win) {
+            console.log('Victoire ! Sortie atteinte automatiquement !');
+            console.log('Chemin suivi :', path);
+            return;
+          }
         }
 
-        if (moveResponse.win) {
-          console.log(' Victoire ! Sortie atteinte automatiquement !');
-          console.log('Chemin suivi :', path);
-          break;
-        }
+        // marque la position comme explorée
+        visited.add(`${pos.x},${pos.y}`);
 
+        // découvre les voisins de la position courante
         const neighbors = await firstValueFrom(
           this.api.discover(this.discoverUrl())
         );
-
         this.cells.set(neighbors);
 
         for (const neighbor of neighbors) {
@@ -105,13 +121,20 @@ export class LabyrinthService {
 
           const newPath = [...path, { x: neighbor.x, y: neighbor.y }];
 
+          // Si la case voisine est la sortie, on s’arrête ici
           if (neighbor.value === 'stop') {
-            console.log(' Victoire ! Sortie atteinte automatiquement !');
-            console.log('Chemin suivi :', path);
+            console.log('Victoire ! Sortie atteinte automatiquement !');
+            console.log('Chemin suivi :', newPath);
             return;
           }
 
-          tabOfPathFromStartToActualPosition.push({ pos: { x: neighbor.x, y: neighbor.y }, path: newPath });
+          // Sinon, on ajoute cette position à la file
+          tabOfPathFromStartToActualPosition.push({
+            pos: { x: neighbor.x, y: neighbor.y },
+            path: newPath,
+          });
+
+          // On la marque comme visitée
           visited.add(key);
         }
       }
