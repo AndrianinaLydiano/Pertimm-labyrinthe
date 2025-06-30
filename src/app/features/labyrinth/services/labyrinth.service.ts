@@ -25,6 +25,8 @@ export class LabyrinthService {
       this.discoverUrl.set(res.url_discover);
       this.dead.set(res.dead);
       this.win.set(res.win);
+      console.log(`Partie commencée pour le joueur: ${res.player}`);
+      console.log(`Position initiale: (${res.position_x}, ${res.position_y})`);
     });
   }
 
@@ -41,6 +43,7 @@ export class LabyrinthService {
       this.discoverUrl.set(res.url_discover);
       this.dead.set(res.dead);
       this.win.set(res.win);
+      console.log('Résultat après déplacement:', res);
     });
   }
 
