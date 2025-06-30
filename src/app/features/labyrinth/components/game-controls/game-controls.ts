@@ -15,6 +15,9 @@ export class GameControls {
   playerName: string = '';
   nameError: string = '';
 
+  get isAutoSolving() { return this.labyrinthService.isAutoSolving; }
+  get autoSolveResult() { return this.labyrinthService.autoSolveResult; }
+
   onNameInput() {
     if (this.nameError) {
       this.nameError = '';
@@ -45,5 +48,9 @@ export class GameControls {
 
   solveAutomatically() {
     this.labyrinthService.solveAutomatically();
+  }
+
+  dismissResult() {
+    this.labyrinthService.autoSolveResult.set(null);
   }
 }

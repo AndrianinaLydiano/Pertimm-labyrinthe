@@ -16,6 +16,17 @@ export class LabyrinthService {
   discoverUrl = signal<string>('');
   dead = signal(false);
   win = signal(false);
+  isAutoSolving = signal(false);
+  autoSolveResult = signal<{
+    success: boolean;
+    message: string;
+    path: Position[];
+  } | null>(null);
+
+  private resetAutoSolve() {
+    this.isAutoSolving.set(false);
+    this.autoSolveResult.set(null);
+  }
 
   start(player: string) {
     this.api.startGame(player).subscribe((res) => {
@@ -25,6 +36,7 @@ export class LabyrinthService {
       this.discoverUrl.set(res.url_discover);
       this.dead.set(res.dead);
       this.win.set(res.win);
+      this.resetAutoSolve();
     });
   }
 
@@ -46,6 +58,15 @@ export class LabyrinthService {
 
   async solveAutomatically() {
     try {
+      if (this.isAutoSolving()) {
+        console.log('Auto-solving already in progress');
+        return;
+      }
+
+      // Set loading state
+      this.isAutoSolving.set(true);
+      this.autoSolveResult.set(null);
+
       //liste des positions déjà visitées sans doublon
       const visited = new Set<string>();
       const tabOfPathFromStartToActualPosition: {
@@ -63,6 +84,11 @@ export class LabyrinthService {
 
       if (this.win()) {
         console.log('Le jeu est déjà gagné !');
+        this.autoSolveResult.set({
+          success: true,
+          message: 'Le jeu est déjà gagné !',
+          path: [this.position()],
+        });
         return;
       }
 
@@ -88,6 +114,11 @@ export class LabyrinthService {
           // Si on est mort, on arrête tout
           if (response.dead) {
             console.log('Partie terminée, on a atterri sur un piège');
+            this.autoSolveResult.set({
+              success: false,
+              message: 'Partie terminée, on a atterri sur un piège',
+              path: path,
+            });
             return;
           }
 
@@ -95,6 +126,11 @@ export class LabyrinthService {
           if (response.win) {
             console.log('Victoire ! Sortie atteinte automatiquement !');
             console.log('Chemin suivi :', path);
+            this.autoSolveResult.set({
+              success: true,
+              message: `Victoire ! Sortie atteinte automatiquement!`,
+              path: path,
+            });
             return;
           }
         }
@@ -123,8 +159,25 @@ export class LabyrinthService {
 
           // Si la case voisine est la sortie, on s’arrête ici
           if (neighbor.value === 'stop') {
+            // se déplacer vers la sortie
+            const response = await firstValueFrom(
+              this.api.move(this.moveUrl(), { x: neighbor.x, y: neighbor.y })
+            );
+
+            // Mise à jour de l'état
+            this.position.set({ x: response.position_x, y: response.position_y });
+            this.moveUrl.set(response.url_move);
+            this.discoverUrl.set(response.url_discover);
+            this.dead.set(response.dead);
+            this.win.set(response.win);
+
             console.log('Victoire ! Sortie atteinte automatiquement !');
             console.log('Chemin suivi :', newPath);
+            this.autoSolveResult.set({
+              success: true,
+              message: 'Victoire ! Sortie atteinte automatiquement !',
+              path: newPath,
+            });
             return;
           }
 
@@ -141,9 +194,21 @@ export class LabyrinthService {
 
       if (!this.win() && !this.dead()) {
         console.log("Aucune sortie trouvée avec l'algorithme automatique!");
+        this.autoSolveResult.set({
+          success: false,
+          message: "Aucune sortie trouvée avec l'algorithme automatique!",
+          path: [],
+        });
       }
     } catch (error) {
       console.error('Erreur lors de la résolution automatique :', error);
+      this.autoSolveResult.set({
+        success: false,
+        message: 'Erreur lors de la résolution automatique',
+        path: [],
+      });
+    } finally {
+      this.isAutoSolving.set(false);
     }
   }
 }
