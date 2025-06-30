@@ -1,0 +1,125 @@
+<div class="bg-white rounded-lg shadow-md p-6">
+  <h2 class="text-xl font-semibold mb-4 text-gray-800">Contrôles</h2>
+
+  <div class="space-y-4">
+    <div>
+      <label for="playerName" class="block text-sm font-medium text-gray-700 mb-2">
+        Nom du joueur
+      </label>
+      <input
+        id="playerName"
+        type="text"
+        [(ngModel)]="playerName"
+        (input)="onNameInput()"
+        placeholder="Entrez votre nom"
+        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        [class.border-red-500]="nameError"
+        [class.border-gray-300]="!nameError"
+        [disabled]="isAutoSolving()"
+      />
+
+      <!-- Message d'erreur -->
+      <p *ngIf="nameError" class="text-red-500 text-sm mt-1">
+        {{ nameError }}
+      </p>
+    </div>
+
+    <button (click)="startGame()"
+      [disabled]="isAutoSolving()"
+      class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50">
+      Démarrer le jeu
+    </button>
+
+    <button (click)="discover()"
+      [disabled]="isAutoSolving()"
+      class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50">
+      Découvrir les voisins
+    </button>
+
+    <button (click)="solveAutomatically()" [disabled]="isAutoSolving()"
+      class="w-full font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-purple-500 hover:bg-purple-600 text-white">
+      <span *ngIf="!isAutoSolving()">Résoudre automatiquement</span>
+      <span *ngIf="isAutoSolving()" class="flex items-center justify-center">
+        <svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" stroke-width="4" stroke-linecap="round"
+            stroke-dasharray="60" stroke-dashoffset="20" />
+        </svg>
+        Résolution en cours...
+      </span>
+    </button>
+
+    <!-- Auto-solving indicator -->
+    <div *ngIf="isAutoSolving()" class="bg-blue-50 border border-blue-200 rounded-md p-4">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 text-blue-500">
+          <svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="60" stroke-dashoffset="20" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-blue-800">Résolution automatique en cours</h3>
+          <p class="text-sm text-blue-600">L'algorithme analyse le labyrinthe...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-solve result -->
+    <div *ngIf="autoSolveResult() && !isAutoSolving()"
+         class="rounded-md p-4 border"
+         [class.bg-green-50]="autoSolveResult()?.success"
+         [class.border-green-200]="autoSolveResult()?.success"
+         [class.bg-red-50]="!autoSolveResult()?.success"
+         [class.border-red-200]="!autoSolveResult()?.success"
+    >
+      <div class="flex justify-between items-start">
+        <div class="flex">
+          <div class="ml-3">
+            <h3 class="text-sm font-medium"
+                [class.text-green-800]="autoSolveResult()?.success"
+                [class.text-red-800]="!autoSolveResult()?.success">
+              {{ autoSolveResult()?.success ? 'Succès !' : 'Échec' }}
+            </h3>
+            <p class="text-sm mt-1"
+               [class.text-green-600]="autoSolveResult()?.success"
+               [class.text-red-600]="!autoSolveResult()?.success">
+              {{ autoSolveResult()?.message }}
+            </p>
+
+            <div *ngIf="autoSolveResult()?.path?.length" class="mt-4">
+              <div class="bg-gray-100 rounded-md p-3" style="max-height:30vh; overflow-y:auto;">
+                <p class="text-xs font-semibold mb-2" [class.text-green-700]="autoSolveResult()?.success"
+                  [class.text-red-700]="!autoSolveResult()?.success">
+                  Chemin trouvé&nbsp;:
+                </p>
+                <div class="space-y-1 text-xs text-gray-700">
+                  <div *ngFor="let pos of autoSolveResult()?.path; let i = index">
+                    <div *ngIf="i < (autoSolveResult()?.path?.length || 0) - 1" class="flex items-center space-x-2">
+                      <!-- Position de départ -->
+                      <span class="inline-block bg-white rounded px-2 py-1 shadow-sm border border-gray-200 font-mono">
+                        ({{ autoSolveResult()?.path![i].x }}, {{ autoSolveResult()?.path![i].y }})
+                      </span>
+
+                      <span class="text-gray-400">→</span>
+
+                      <span class="inline-block bg-white rounded px-2 py-1 shadow-sm border border-gray-200 font-mono">
+                        ({{ autoSolveResult()?.path![i + 1].x }}, {{ autoSolveResult()?.path![i + 1].y }})
+                      </span>
+
+                      <span *ngIf="i === (autoSolveResult()?.path?.length || 0) - 2"
+                        class="text-green-600 font-semibold text-xs">(Arrivée)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button (click)="dismissResult()"
+                class="text-gray-400 hover:text-gray-600 text-xl font-bold">
+          ×
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
