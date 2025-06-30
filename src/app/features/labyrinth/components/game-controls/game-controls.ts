@@ -17,6 +17,7 @@ export class GameControls {
 
   get isAutoSolving() { return this.labyrinthService.isAutoSolving; }
   get autoSolveResult() { return this.labyrinthService.autoSolveResult; }
+  get player() { return this.labyrinthService.player; }
 
   onNameInput() {
     if (this.nameError) {
