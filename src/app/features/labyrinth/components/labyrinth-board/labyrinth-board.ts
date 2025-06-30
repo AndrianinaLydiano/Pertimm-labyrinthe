@@ -14,7 +14,6 @@ export class LabyrinthBoard {
   cells = this.labyrinthService.cells;
 
   moveTo(cell: Cell) {
-    this.labyrinthService.move({ x: cell.x, y: cell.y });
-    this.labyrinthService.discover();
+    this.labyrinthService.moveAndDiscover({ x: cell.x, y: cell.y });
   }
 }

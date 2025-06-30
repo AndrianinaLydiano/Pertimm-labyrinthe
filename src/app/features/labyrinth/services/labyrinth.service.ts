@@ -56,6 +56,20 @@ export class LabyrinthService {
     });
   }
 
+  moveAndDiscover(pos: Position) {
+    this.api.move(this.moveUrl(), pos).subscribe((res) => {
+      this.position.set({ x: res.position_x, y: res.position_y });
+      this.moveUrl.set(res.url_move);
+      this.discoverUrl.set(res.url_discover);
+      this.dead.set(res.dead);
+      this.win.set(res.win);
+
+      this.api.discover(this.discoverUrl()).subscribe((neighbors) => {
+        this.cells.set(neighbors);
+      });
+    });
+  }
+
   async solveAutomatically() {
     try {
       if (this.isAutoSolving()) {
@@ -110,6 +124,9 @@ export class LabyrinthService {
           this.discoverUrl.set(response.url_discover);
           this.dead.set(response.dead);
           this.win.set(response.win);
+
+          // Ajout delay pour rendre l'animation visible
+          await new Promise(resolve => setTimeout(resolve, 500));
 
           // Si on est mort, on arrête tout
           if (response.dead) {
