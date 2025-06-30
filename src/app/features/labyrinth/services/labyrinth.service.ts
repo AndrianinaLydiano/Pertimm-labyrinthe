@@ -77,7 +77,6 @@ export class LabyrinthService {
         return;
       }
 
-      // Set loading state
       this.isAutoSolving.set(true);
       this.autoSolveResult.set(null);
 
